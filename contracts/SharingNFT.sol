@@ -40,8 +40,8 @@ contract SharingNFT is
 
     // Any users can mint a NFT token with related attributes.
     function mint(string memory uri, string memory tag) public payable {
-        require(bytes(uri).length > 0, 'uri cannot be empty.');
-        require(bytes(tag).length > 0, 'tag cannot be empty.');
+        require(bytes(uri).length > 0, "uri cannot be empty.");
+        require(bytes(tag).length > 0, "tag cannot be empty.");
 
         NFTAttributes memory nftAttributes;
         nftAttributes.uri = uri;
