@@ -1,38 +1,100 @@
 // SPDX-License-Identifier: MIT
+// solhint-disable-next-line
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721URIStorageUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import {ERC721BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {CountersUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-contract SharingNFT is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
-    using Counters for Counters.Counter;
+contract SharingNFT is
+    ERC721Upgradeable,
+    ERC721URIStorageUpgradeable,
+    ERC721BurnableUpgradeable,
+    OwnableUpgradeable
+{
+    struct NFTAttributes {
+        string uri;
+        string tag;
+        uint256 weight;
+    }
 
-    Counters.Counter private _tokenIdCounter;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    constructor() ERC721("SharingNFT", "Sharing") {}
+    CountersUpgradeable.Counter private _tokenIdCounter;
 
-    function safeMint(address to, string memory uri) public onlyOwner {
+    mapping(uint256 => string) private _tokenTags;
+
+    mapping(uint256 => uint256) private _tokenWeights;
+
+    mapping(address => uint256) private _ownersWeights;
+
+    function initialize() public initializer {
+        __ERC721_init("SharingNFT", "Sharing");
+        __Ownable_init();
+    }
+
+    // Any users can mint a NFT token with related attributes.
+    function safeMint(NFTAttributes memory nftAttributes) public payable {
+        address to = msg.sender;
+        if (_ownersWeights[to] != 0) {
+            nftAttributes.weight = _ownersWeights[to];
+        } else {
+            nftAttributes.weight = 1;
+            _ownersWeights[to] = 1;
+        }
+
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+        _setTokenAttributes(tokenId, nftAttributes);
     }
 
-    // The following functions are overrides required by Solidity.
+    function _setTokenAttributes(
+        uint256 tokenId,
+        NFTAttributes memory nftAttributes
+    ) internal {
+        _setTokenURI(tokenId, nftAttributes.uri);
+        _setTokenTag(tokenId, nftAttributes.tag);
+        _setTokenWeight(tokenId, nftAttributes.weight);
+    }
 
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+    function _setTokenTag(uint256 tokenId, string memory tag) internal {
+        require(_exists(tokenId), "SharingNFT: tag set of nonexistent token");
+        _tokenTags[tokenId] = tag;
+    }
+
+    function _setTokenWeight(uint256 tokenId, uint256 weight) internal {
+        require(
+            _exists(tokenId),
+            "SharingNFT: Weight set of nonexistent token"
+        );
+        _tokenWeights[tokenId] = weight;
+    }
+
+    function _burn(
+        uint256 tokenId
+    ) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(tokenId);
     }
 
-    function tokenURI(uint256 tokenId)
+    function tokenURI(
+        uint256 tokenId
+    )
         public
         view
-        override(ERC721, ERC721URIStorage)
+        override(ERC721Upgradeable, ERC721URIStorageUpgradeable)
         returns (string memory)
     {
         return super.tokenURI(tokenId);
+    }
+
+    function tokenTag(uint256 tokenId) public view returns (string memory) {
+        return _tokenTags[tokenId];
+    }
+
+    function tokenWeight(uint256 tokenId) public view returns (uint256) {
+        return _tokenWeights[tokenId];
     }
 }
