@@ -24,7 +24,7 @@ describe("SharingNFT", function () {
         await contract.deployed();
     });
 
-    describe("mint", function () {
+    describe('mint', function () {
         it('mint with empty uri', async function () {
             await expect(
                 contract.mint('', ''),
@@ -47,6 +47,24 @@ describe("SharingNFT", function () {
             await expect(
                 contract.connect(otherUser).mint('http://localhost', 'blockchain'),
             ).to.emit(contract, 'Mint').withArgs(1, otherUser.address);
+        })
+    });
+
+    describe('burn', function () {
+        it('burn by its owner', async function () {
+            await contract.connect(otherUser).mint('http://localhost', 'blockchain');
+
+            await expect(
+                contract.connect(otherUser).burn(1),
+            ).to.emit(contract, 'Burn').withArgs(1, otherUser.address);
+        });
+
+        it('burn by others and revert', async function () {
+            await contract.connect(otherUser).mint('http://localhost', 'blockchain');
+
+            await expect(
+                contract.connect(owner).burn(1),
+            ).to.be.revertedWith('ERC721: caller is not token owner or approved');
         })
     })
 })

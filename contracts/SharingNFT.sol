@@ -15,6 +15,7 @@ contract SharingNFT is
     OwnableUpgradeable
 {
     event Mint(uint256 indexed tokenId, address indexed minter);
+    event Burn(uint256 indexed tokenId, address indexed burner);
 
     struct NFTAttributes {
         string uri;
@@ -90,6 +91,8 @@ contract SharingNFT is
         uint256 tokenId
     ) internal override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         super._burn(tokenId);
+
+        emit Burn(tokenId, msg.sender);
     }
 
     function tokenURI(
