@@ -14,6 +14,8 @@ contract SharingNFT is
     ERC721BurnableUpgradeable,
     OwnableUpgradeable
 {
+    event Mint(uint256 indexed tokenId, address indexed minter);
+
     struct NFTAttributes {
         string uri;
         string tag;
@@ -36,7 +38,14 @@ contract SharingNFT is
     }
 
     // Any users can mint a NFT token with related attributes.
-    function safeMint(NFTAttributes memory nftAttributes) public payable {
+    function mint(string memory uri, string memory tag) public payable {
+        require(bytes(uri).length > 0, 'uri cannot be empty.');
+        require(bytes(tag).length > 0, 'tag cannot be empty.');
+
+        NFTAttributes memory nftAttributes;
+        nftAttributes.uri = uri;
+        nftAttributes.tag = tag;
+
         address to = msg.sender;
         if (_ownersWeights[to] != 0) {
             nftAttributes.weight = _ownersWeights[to];
@@ -45,10 +54,14 @@ contract SharingNFT is
             _ownersWeights[to] = 1;
         }
 
-        uint256 tokenId = _tokenIdCounter.current();
+        // counter start from 1
         _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter.current();
+
         _safeMint(to, tokenId);
         _setTokenAttributes(tokenId, nftAttributes);
+
+        emit Mint(tokenId, msg.sender);
     }
 
     function _setTokenAttributes(
