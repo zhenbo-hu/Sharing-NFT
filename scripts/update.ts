@@ -1,7 +1,8 @@
 // scripts/upgrade_box.js
 const { ethers, upgrades } = require("hardhat");
+require('dotenv').config();
 
-const SharingNFTContractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+const SharingNFTContractAddress = process.env.FANTOM_TEST_SHARING_NFT_ADDRESS;
 
 async function main() {
   const BoxV2 = await ethers.getContractFactory("SharingNFT");
